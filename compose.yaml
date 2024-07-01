@@ -1,6 +1,31 @@
 version: '3.8'
 name: template01
 services:
+  product_service:
+    build:
+      context: ./product_service
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./product_service:/code  # Sync local development directory with the container
+    depends_on:
+        - product_db
+        - broker
+    ports:
+      - "8003:8000"  # Expose container port 8000 to host port 8000
+  
+  product_db:
+    image: postgres:latest  # Use the official PostgreSQL image
+    restart: always
+    container_name: product_db_container
+    environment:
+        - POSTGRES_USER=ziakhan
+        - POSTGRES_PASSWORD=my_password
+        - POSTGRES_DB=product_db
+    ports:
+        - '5434:5432'
+    volumes:
+        - product_database:/var/lib/postgresql/data
+    
   api:
     build:
       context: ./todo
@@ -68,9 +93,14 @@ services:
       DYNAMIC_CONFIG_ENABLED: "true"
     depends_on:
       - broker
+
 volumes:
   postgres_db:
     driver: local
+  
+  product_database:
+    driver: local
+
 networks:
   default:
     driver: bridge
